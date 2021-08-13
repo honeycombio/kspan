@@ -1,0 +1,6 @@
+builds:
+- id: kspan
+  main: . # in Dockerfile, this was renamed /manager and made the entrypoint
+  flags:
+  # Flags taken from the Dockerfile
+  - -a # force rebuilding of packages already up-to-date
