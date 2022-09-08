@@ -45,7 +45,15 @@ func getUpdateSource(obj v1.Object, subFields ...string) (source string, operati
 		if err != nil {
 			continue
 		}
-		if _, found, _ := unstructured.NestedFieldNoCopy(fields, subFields...); found && mf.Time.Time.After(ts) {
+
+		changedTime := mf.Time
+
+		// no changed time for the manifest
+		if changedTime == nil {
+			continue
+		}
+
+		if _, found, _ := unstructured.NestedFieldNoCopy(fields, subFields...); found && changedTime.Time.After(ts) {
 			ts = mf.Time.Time
 			source = mf.Manager
 			operation = string(mf.Operation)
