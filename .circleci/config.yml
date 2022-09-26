@@ -1,0 +1,92 @@
+version: 2.1
+
+orbs:
+  aws-cli: circleci/aws-cli@2.1.0
+  aws-ecr: circleci/aws-ecr@6.15.3
+  go: circleci/go@1.7
+
+commands:
+  fix_outdated_things:
+    steps:
+      - run:
+          name: Fix outdated things
+          command: |
+            export GO111MODULE=on 
+            go get sigs.k8s.io/controller-tools/cmd/controller-gen@v0.3.0
+            go get -u golang.org/x/sys
+
+  install_ko:
+    steps:
+      - run:
+          name: Install ko
+          command: |
+            # go install github.com/google/ko@latest
+            curl -sL https://github.com/google/ko/releases/download/v0.8.3/ko_0.8.3_Linux_arm64.tar.gz | tar -xzv ko || true
+            ./ko version # check that it installed; if not, this step will fail
+  setup:
+    steps:
+      - checkout: { path: kspan }
+
+jobs:
+  go_test:
+    machine:
+      image: ubuntu-2004:202101-01
+      resource_class: arm.medium
+      docker_layer_caching: true
+    steps:
+      - setup
+      - fix_outdated_things
+      - run:
+          name: test go
+          command: |
+            set -x
+            cd kspan
+            make test
+
+  deploy_docker:
+    machine:
+      image: ubuntu-2004:202101-01
+      resource_class: arm.medium
+      docker_layer_caching: true
+    steps:
+      - setup
+      - aws-cli/setup:
+          aws-access-key-id: AWS_ACCESS_KEY_ID
+          aws-secret-access-key: AWS_SECRET_ACCESS_KEY
+          aws-region: AWS_REGION
+      - install_ko
+      - run:
+          name: build_docker_image
+          command: |
+            set -x
+            cd kspan;
+            export BUILD_ID="$(echo $(expr $CIRCLE_BUILD_NUM + 100000))"
+            echo BUILD_ID=$BUILD_ID
+            export TAG="$(test "${CIRCLE_BRANCH}" == "main" && echo "" || echo "branch-")${BUILD_ID}"
+            export ECR_HOST=702835727665.dkr.ecr.us-east-1.amazonaws.com
+            # ko adds /kspan to the end by itself
+            # yes this is scary, I don't like ko
+            export KO_DOCKER_REPO="${ECR_HOST}"
+            
+            aws ecr get-login-password --region us-east-1 \
+              | docker login --username AWS --password-stdin "${ECR_HOST}"
+
+            ../ko publish \
+            --base-import-paths \
+            --tags $TAG \
+            --platform=linux/amd64,linux/arm64 \
+            --push=true \
+            .
+
+workflows:
+  version: 2
+  build:
+    jobs:
+      - go_test:
+          name: go_test
+      - deploy_docker:
+          context:
+            - Honeycomb Secrets
+          filters:
+            branches:
+              ignore: /dependabot.*/
