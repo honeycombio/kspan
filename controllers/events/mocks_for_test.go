@@ -59,9 +59,11 @@ func (f *fakeExporter) dump() []string {
 		if found {
 			parentStr = fmt.Sprintf(" (%d)", parent)
 		}
+
 		message := attributeValue(d.Attributes, attribute.Key("message"))
 		resourceName := attributeValue(d.Resource.Attributes(), semconv.ServiceNameKey)
-		ret = append(ret, fmt.Sprintf("%d: %s %s%s %s", i, resourceName, d.Name, parentStr, message))
+		serviceName := attributeValue(d.Resource.Attributes(), attribute.Key("k8s.service"))
+		ret = append(ret, fmt.Sprintf("%d: %s %s %s%s %s", i, resourceName, serviceName, d.Name, parentStr, message))
 	}
 	return ret
 }

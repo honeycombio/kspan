@@ -5,7 +5,10 @@ import (
 	"sync"
 	"time"
 
+	"go.opentelemetry.io/otel/attribute"
 	tracesdk "go.opentelemetry.io/otel/sdk/export/trace"
+	"go.opentelemetry.io/otel/sdk/resource"
+	"go.opentelemetry.io/otel/semconv"
 	apitrace "go.opentelemetry.io/otel/trace"
 )
 
@@ -31,6 +34,21 @@ func (r *EventWatcher) emitSpan(ctx context.Context, ref objectReference, span *
 	r.Log.Info("adding span", "ref", ref, "name", span.Name, "start", span.StartTime.Format(timeFmt), "end", span.EndTime.Format(timeFmt))
 	r.outgoing.Lock()
 	defer r.outgoing.Unlock()
+
+	// diddle with the span here?
+	var svcName string
+
+iter:
+	for i := span.Resource.Iter(); i.Next(); {
+		kv := i.Label()
+		switch kv.Key {
+		case semconv.ServiceNameKey:
+			svcName = kv.Value.AsString()
+			break iter
+		}
+	}
+
+	span.Resource = resource.Merge(span.Resource, resource.NewWithAttributes(semconv.ServiceNameKey.String("kspan"), attribute.Key("k8s.service").String(svcName)))
 
 	if prev, found := r.outgoing.byRef[ref]; found {
 		if !prev.StartTime.After(span.StartTime) {
