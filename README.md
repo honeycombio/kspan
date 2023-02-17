@@ -1,5 +1,7 @@
 # kspan - Turning Kubernetes Events into spans
 
+[![OSS Lifecycle](https://img.shields.io/osslifecycle/honeycombio/kspan?color=success)](https://github.com/honeycombio/home/blob/main/honeycomb-oss-lifecycle-and-practices.md)
+
 Originally forked from https://github.com/ismith/kspan, itself a fork of https://github.com/puckpuck/kspan, itself a fork of https://github.com/weaveworks-experiments/kspan.
 
 ## This project is a Work In Progress, under active evolution.
