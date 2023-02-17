@@ -1,6 +1,5 @@
-
 # Image URL to use all building/pushing image targets
-IMG ?= puckpuck/kspan:dev
+IMG ?= honecyombio/kspan:dev
 # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
 CRD_OPTIONS ?= "crd:trivialVersions=true"
 
