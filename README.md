@@ -25,7 +25,7 @@ Complications:
 
 Heuristics:
  - If we recently saw an event from an owner, that probably caused this event in the owned object. We set the child-of relationship on the new span.
- - A couple of specific events, from ReplicationSet and StatefulSet, are reported on the owner but make more sense as events on the sub-object they mention.
+ - A couple of specific events from ReplicationSet and StatefulSet are reported on the owner, but make more sense as events on the sub-object they mention.
  - An event can be marked in its annotations as the start of a trace.
  - If we have walked the owner chain up to an object with no owner, no recent event, then start a new trace.
    - Trace ID is hashed from UID of this object + its generation.
