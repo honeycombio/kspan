@@ -9,7 +9,7 @@ Originally forked from https://github.com/weaveworks-experiments/kspan and has g
 Most Kubernetes components produce Events when something interesting happens.
 This program turns those Events into OpenTelemetry Spans, joining them up by causality and grouping them together into Traces.
 
-Example: scaling up a replicaset which eventually leads to an error that can be used as a trigger.
+Example: Scaling up a replicaset, which eventually leads to an error that can be used as a trigger.
 
 ![image](example.png)
 
