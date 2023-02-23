@@ -31,5 +31,5 @@ Heuristics:
    - Trace ID is hashed from UID of this object and its generation.
 
 For future consideration:
- - We can match up resourceVersion between event and object.
+ - We can match up `resourceVersion` between event and object.
    - Do we need to?
