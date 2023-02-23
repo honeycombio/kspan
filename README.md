@@ -32,4 +32,4 @@ Heuristics:
 
 For future consideration:
  - We can match up resourceVersion between event and object.
-   - do we need to?
+   - Do we need to?
