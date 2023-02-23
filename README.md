@@ -2,7 +2,7 @@
 
 [![OSS Lifecycle](https://img.shields.io/osslifecycle/honeycombio/kspan?color=success)](https://github.com/honeycombio/home/blob/main/honeycomb-oss-lifecycle-and-practices.md)
 
-Originally forked from https://github.com/weaveworks-experiments/kspan and has gone through several iterations by Honeycomb before landing here.
+This kspan repo was originally forked from https://github.com/weaveworks-experiments/kspan and has gone through several iterations by Honeycomb before landing here.
 
 ## This project is a Work In Progress, under active evolution.
 
