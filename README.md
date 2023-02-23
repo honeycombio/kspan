@@ -28,7 +28,7 @@ Heuristics:
  - A couple of specific events from ReplicationSet and StatefulSet are reported on the owner, but make more sense as events on the sub-object they mention.
  - An event can be marked in its annotations as the start of a trace.
  - If we have walked the owner chain up to an object with no owner, no recent event, then start a new trace.
-   - Trace ID is hashed from UID of this object + its generation.
+   - Trace ID is hashed from UID of this object and its generation.
 
 For future consideration:
  - We can match up resourceVersion between event and object.
