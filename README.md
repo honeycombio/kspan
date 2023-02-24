@@ -1,7 +1,5 @@
 # kspan - Turning Kubernetes Events into spans
 
-Originally forked from https://github.com/ismith/kspan, itself a fork of https://github.com/puckpuck/kspan, itself a fork of https://github.com/weaveworks-experiments/kspan.
-
 ## This project is a Work In Progress, under active evolution.
 
 Most Kubernetes components produce Events when something interesting happens.
