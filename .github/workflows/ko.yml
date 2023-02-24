@@ -1,10 +1,8 @@
 ---
 name: Ko
-
 on: [push, pull_request, create]  # create is for tags
 
 jobs:
-
   build:
     runs-on: ubuntu-latest
     steps:
@@ -22,4 +20,8 @@ jobs:
     - run: make test
 
     - uses: ko-build/setup-ko@v0.6
-    - run: ko build --platform=linux/amd64,linux/arm64
+    - if: github.ref_type == "branch" && github.ref_name ==  "main"
+      run: ko build -B
+    - if: github.ref_type == "tag"
+      run: ko build -B --tags "latest,$(echo ${{ github.ref }} | cut -c11-)"
+
