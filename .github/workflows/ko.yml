@@ -20,8 +20,8 @@ jobs:
     - run: make test
 
     - uses: ko-build/setup-ko@v0.6
-    - if: github.ref_type == "branch" && github.ref_name ==  "main"
+    - if: github.ref_type == 'branch' && github.ref_name ==  'main'
       run: ko build -B
-    - if: github.ref_type == "tag"
+    - if: github.ref_type == 'tag'
       run: ko build -B --tags "latest,$(echo ${{ github.ref }} | cut -c11-)"
 
