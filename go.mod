@@ -3,7 +3,7 @@ module github.com/weaveworks-experiments/kspan
 go 1.13
 
 require (
-	github.com/go-logr/logr v0.1.0
+	github.com/go-logr/logr v1.2.4
 	github.com/imdario/mergo v0.3.9 // indirect
 	github.com/onsi/ginkgo v1.14.0 // indirect
 	github.com/onsi/gomega v1.10.1
