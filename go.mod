@@ -3,10 +3,9 @@ module github.com/weaveworks-experiments/kspan
 go 1.13
 
 require (
-	github.com/go-logr/logr v0.1.0
+	github.com/go-logr/logr v1.2.3
 	github.com/imdario/mergo v0.3.9 // indirect
-	github.com/onsi/ginkgo v1.14.0 // indirect
-	github.com/onsi/gomega v1.10.1
+	github.com/onsi/gomega v1.27.6
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.15.1
 	go.opentelemetry.io/otel v0.19.0
