@@ -1,6 +1,6 @@
 ---
 name: Ko
-on: [push, pull_request, create]  # create is for tags
+on: [pull_request, create]  # create is for tags
 
 jobs:
   build:
