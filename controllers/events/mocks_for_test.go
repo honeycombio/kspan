@@ -11,8 +11,11 @@ import (
 	"go.opentelemetry.io/otel/sdk/trace/tracetest"
 	semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
 	"go.opentelemetry.io/otel/trace"
+	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/serializer"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
+	clienttesting "k8s.io/client-go/testing"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake" //nolint:staticcheck
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 )
@@ -24,7 +27,20 @@ func newTestEventWatcher(initObjs ...runtime.Object) (context.Context, *EventWat
 	_ = clientgoscheme.AddToScheme(scheme)
 	log := zap.New(zap.UseDevMode(true))
 
-	fakeClient := fake.NewFakeClientWithScheme(scheme, initObjs...)
+	// Use a plain ObjectTracker rather than the fake client's default field-managed
+	// tracker. The field-managed tracker recomputes managedFields on insert, which
+	// discards the manager and operation recorded in the fixtures; the controller
+	// synthesises its top-level span from exactly those values. A plain tracker
+	// stores objects verbatim, matching the behaviour these tests were written
+	// against. WithReturnManagedFields keeps managedFields on read responses, which
+	// the fake client otherwise strips by default.
+	tracker := clienttesting.NewObjectTracker(scheme, serializer.NewCodecFactory(scheme).UniversalDecoder())
+	fakeClient := fake.NewClientBuilder().
+		WithScheme(scheme).
+		WithObjectTracker(tracker).
+		WithReturnManagedFields().
+		WithRuntimeObjects(sanitizeForFakeClient(initObjs)...).
+		Build()
 	exporter := newFakeExporter()
 
 	r := &EventWatcher{
@@ -36,6 +52,25 @@ func newTestEventWatcher(initObjs ...runtime.Object) (context.Context, *EventWat
 	r.initialize(scheme)
 
 	return ctx, r, exporter, log
+}
+
+// sanitizeForFakeClient adapts initial objects to the stricter controller-runtime
+// fake client, which refuses to seed an object that has a deletionTimestamp but no
+// finalizers. Some fixtures represent pods mid-deletion; we add a placeholder
+// finalizer on a copy so the tracker accepts them. This does not affect the
+// controller's trace output, which never inspects finalizers.
+func sanitizeForFakeClient(objs []runtime.Object) []runtime.Object {
+	out := make([]runtime.Object, 0, len(objs))
+	for _, o := range objs {
+		obj := o.DeepCopyObject()
+		if accessor, err := meta.Accessor(obj); err == nil {
+			if accessor.GetDeletionTimestamp() != nil && len(accessor.GetFinalizers()) == 0 {
+				accessor.SetFinalizers([]string{"kspan.test/placeholder"})
+			}
+		}
+		out = append(out, obj)
+	}
+	return out
 }
 
 func newFakeExporter() *fakeExporter {
