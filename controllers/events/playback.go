@@ -18,7 +18,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/yaml"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 
-	"github.com/weaveworks-experiments/kspan/pkg/mtime"
+	"github.com/markandersontrocme/kspan/pkg/mtime"
 )
 
 type captureDetails struct {

@@ -37,7 +37,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
-	"github.com/weaveworks-experiments/kspan/controllers/events"
+	"github.com/markandersontrocme/kspan/controllers/events"
 	// +kubebuilder:scaffold:imports
 )
 

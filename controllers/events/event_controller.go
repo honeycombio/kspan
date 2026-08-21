@@ -21,7 +21,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/metrics"
 
-	"github.com/weaveworks-experiments/kspan/pkg/mtime"
+	"github.com/markandersontrocme/kspan/pkg/mtime"
 )
 
 var (

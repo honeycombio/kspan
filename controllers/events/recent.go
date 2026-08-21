@@ -6,7 +6,7 @@ import (
 
 	"go.opentelemetry.io/otel/trace"
 
-	"github.com/weaveworks-experiments/kspan/pkg/mtime"
+	"github.com/markandersontrocme/kspan/pkg/mtime"
 )
 
 const (
