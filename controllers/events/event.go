@@ -121,11 +121,7 @@ func (r *EventWatcher) eventToSpan(event *corev1.Event, remoteContext trace.Span
 			TraceID: remoteContext.TraceID(),
 			SpanID:  eventToSpanID(event),
 		}),
-		Parent: trace.NewSpanContext(trace.SpanContextConfig{
-			TraceID: remoteContext.TraceID(),
-			SpanID:  remoteContext.SpanID(),
-			Remote:  true,
-		}),
+		Parent:     remoteContext.WithRemote(true),
 		SpanKind:   trace.SpanKindInternal,
 		Name:       fmt.Sprintf("%s.%s", event.InvolvedObject.Kind, event.Reason),
 		StartTime:  eventTime(event),

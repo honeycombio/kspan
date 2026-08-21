@@ -29,6 +29,14 @@ func newOutgoing() *outgoing {
 
 const timeFmt = "15:04:05.000"
 
+// exportSpan snapshots a built span into the read-only form the SDK exporter
+// requires and sends it, logging any error (there is nothing the caller can do).
+func (r *EventWatcher) exportSpan(ctx context.Context, ref objectReference, span *tracetest.SpanStub) {
+	if err := r.Exporter.ExportSpans(ctx, []sdktrace.ReadOnlySpan{span.Snapshot()}); err != nil {
+		r.Log.Error(err, "failed to emit span", "ref", ref, "name", span.Name)
+	}
+}
+
 // note we do not return errors, just log them here, because the one place it
 // can happen refers to a previous span, so not something the caller can react to.
 func (r *EventWatcher) emitSpan(ctx context.Context, ref objectReference, span *tracetest.SpanStub) {
@@ -36,17 +44,11 @@ func (r *EventWatcher) emitSpan(ctx context.Context, ref objectReference, span *
 	r.outgoing.Lock()
 	defer r.outgoing.Unlock()
 
-	// diddle with the span here?
+	// Move the event source out of service.name (which we set to "kspan" so
+	// all spans land in one place) and into a k8s.service attribute.
 	var svcName string
-
-iter:
-	for i := span.Resource.Iter(); i.Next(); {
-		kv := i.Attribute()
-		switch kv.Key {
-		case semconv.ServiceNameKey:
-			svcName = kv.Value.AsString()
-			break iter
-		}
+	if v, ok := span.Resource.Set().Value(semconv.ServiceNameKey); ok {
+		svcName = v.AsString()
 	}
 
 	merged, err := resource.Merge(span.Resource, resource.NewWithAttributes(semconv.SchemaURL, semconv.ServiceNameKey.String("kspan"), attribute.Key("k8s.service").String(svcName)))
@@ -62,10 +64,7 @@ iter:
 			r.Log.Info("New span before old span", "oldSpan", prev.Name, "oldTime", prev.StartTime.Format(timeFmt), "newSpan", span.Name, "newTime", span.StartTime.Format(timeFmt))
 		}
 		r.Log.Info("emitting span", "ref", ref, "name", prev.Name)
-		err := r.Exporter.ExportSpans(ctx, []sdktrace.ReadOnlySpan{prev.Snapshot()})
-		if err != nil {
-			r.Log.Error(err, "failed to emit span", "ref", ref, "name", prev.Name)
-		}
+		r.exportSpan(ctx, ref, prev)
 		// We do not remove from bySpanID at this time, in case it is needed for parent chains
 	}
 	r.outgoing.byRef[ref] = span
@@ -94,10 +93,7 @@ func (r *EventWatcher) flushOutgoing(ctx context.Context, threshold time.Time) {
 	for k, span := range r.outgoing.byRef {
 		if !span.EndTime.After(threshold) {
 			r.Log.Info("deferred emit", "ref", k, "name", span.Name, "endTime", span.EndTime, "threshold", threshold)
-			err := r.Exporter.ExportSpans(ctx, []sdktrace.ReadOnlySpan{span.Snapshot()})
-			if err != nil {
-				r.Log.Error(err, "failed to emit span", "ref", k, "name", span.Name)
-			}
+			r.exportSpan(ctx, k, span)
 			delete(r.outgoing.byRef, k)
 			delete(r.outgoing.bySpanID, span.SpanContext.SpanID())
 		}
