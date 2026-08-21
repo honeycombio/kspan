@@ -25,10 +25,10 @@ import (
 
 	"github.com/pkg/errors"
 	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/exporters/otlp"
-	"go.opentelemetry.io/otel/exporters/otlp/otlpgrpc"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
 	"go.opentelemetry.io/otel/propagation"
-	tracesdk "go.opentelemetry.io/otel/sdk/export/trace"
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	"google.golang.org/grpc/credentials"
 	"k8s.io/apimachinery/pkg/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
@@ -52,10 +52,10 @@ func init() {
 	// +kubebuilder:scaffold:scheme
 }
 
-func setupOTLP(ctx context.Context, addr string, headers string, secured bool) (tracesdk.SpanExporter, error) {
+func setupOTLP(ctx context.Context, addr string, headers string, secured bool) (sdktrace.SpanExporter, error) {
 	setupLog.Info("Setting up OTLP Exporter", "addr", addr)
 
-	var exp *otlp.Exporter
+	var exp *otlptrace.Exporter
 	var err error
 
 	headersMap := make(map[string]string)
@@ -72,22 +72,18 @@ func setupOTLP(ctx context.Context, addr string, headers string, secured bool) (
 	}
 
 	if secured {
-		exp, err = otlp.NewExporter(
+		exp, err = otlptracegrpc.New(
 			ctx,
-			otlpgrpc.NewDriver(
-				otlpgrpc.WithEndpoint(addr),
-				otlpgrpc.WithHeaders(headersMap),
-				otlpgrpc.WithTLSCredentials(credentials.NewClientTLSFromCert(nil, "")),
-			),
+			otlptracegrpc.WithEndpoint(addr),
+			otlptracegrpc.WithHeaders(headersMap),
+			otlptracegrpc.WithTLSCredentials(credentials.NewClientTLSFromCert(nil, "")),
 		)
 	} else {
-		exp, err = otlp.NewExporter(
+		exp, err = otlptracegrpc.New(
 			ctx,
-			otlpgrpc.NewDriver(
-				otlpgrpc.WithEndpoint(addr),
-				otlpgrpc.WithHeaders(headersMap),
-				otlpgrpc.WithInsecure(),
-			),
+			otlptracegrpc.WithEndpoint(addr),
+			otlptracegrpc.WithHeaders(headersMap),
+			otlptracegrpc.WithInsecure(),
 		)
 	}
 	if err != nil {
@@ -156,8 +152,8 @@ func main() {
 	// +kubebuilder:scaffold:builder
 
 	// Close capture file when program shuts down
-	if err := mgr.Add(manager.RunnableFunc(func(stop <-chan struct{}) error {
-		<-stop
+	if err := mgr.Add(manager.RunnableFunc(func(ctx context.Context) error {
+		<-ctx.Done()
 		return capture.Close()
 	})); err != nil {
 		setupLog.Error(err, "unable to add close function")

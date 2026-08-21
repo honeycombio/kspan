@@ -9,7 +9,8 @@ import (
 
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
-	tracesdk "go.opentelemetry.io/otel/sdk/export/trace"
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
+	"go.opentelemetry.io/otel/sdk/trace/tracetest"
 	"go.opentelemetry.io/otel/trace"
 	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -90,7 +91,7 @@ func objectFromEvent(ctx context.Context, client client.Client, event *corev1.Ev
 	return ret, apiVersion, nil
 }
 
-func (r *EventWatcher) eventToSpan(event *corev1.Event, remoteContext trace.SpanContext) *tracesdk.SpanSnapshot {
+func (r *EventWatcher) eventToSpan(event *corev1.Event, remoteContext trace.SpanContext) *tracetest.SpanStub {
 	// resource says which component the span is seen as coming from
 	res := r.getResource(eventSource(event))
 
@@ -115,21 +116,23 @@ func (r *EventWatcher) eventToSpan(event *corev1.Event, remoteContext trace.Span
 		statusCode = codes.Error
 	}
 
-	return &tracesdk.SpanSnapshot{
+	return &tracetest.SpanStub{
 		SpanContext: trace.NewSpanContext(trace.SpanContextConfig{
 			TraceID: remoteContext.TraceID(),
 			SpanID:  eventToSpanID(event),
 		}),
-		ParentSpanID:    remoteContext.SpanID(),
-		SpanKind:        trace.SpanKindInternal,
-		Name:            fmt.Sprintf("%s.%s", event.InvolvedObject.Kind, event.Reason),
-		StartTime:       eventTime(event),
-		EndTime:         eventTime(event),
-		Attributes:      attrs,
-		StatusCode:      statusCode,
-		HasRemoteParent: true,
-		Resource:        res,
-		//InstrumentationLibrary instrumentation.Library
+		Parent: trace.NewSpanContext(trace.SpanContextConfig{
+			TraceID: remoteContext.TraceID(),
+			SpanID:  remoteContext.SpanID(),
+			Remote:  true,
+		}),
+		SpanKind:   trace.SpanKindInternal,
+		Name:       fmt.Sprintf("%s.%s", event.InvolvedObject.Kind, event.Reason),
+		StartTime:  eventTime(event),
+		EndTime:    eventTime(event),
+		Attributes: attrs,
+		Status:     sdktrace.Status{Code: statusCode},
+		Resource:   res,
 	}
 }
 

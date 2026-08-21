@@ -11,7 +11,7 @@ import (
 
 	"github.com/pkg/errors"
 	"go.opentelemetry.io/otel/attribute"
-	tracesdk "go.opentelemetry.io/otel/sdk/export/trace"
+	"go.opentelemetry.io/otel/sdk/trace/tracetest"
 	"go.opentelemetry.io/otel/trace"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -68,7 +68,7 @@ func getUpdateSource(obj v1.Object, subFields ...string) (source string, operati
 
 // If we reach an object with no owner and no recent events, start a new trace.
 // Trace ID is a hash of object UID + generation.
-func (r *EventWatcher) createTraceFromTopLevelObject(ctx context.Context, obj runtime.Object, eventTime time.Time) (*tracesdk.SpanSnapshot, error) {
+func (r *EventWatcher) createTraceFromTopLevelObject(ctx context.Context, obj runtime.Object, eventTime time.Time) (*tracetest.SpanStub, error) {
 	m, err := meta.Accessor(obj)
 	if err != nil {
 		return nil, err
@@ -87,7 +87,7 @@ func (r *EventWatcher) createTraceFromTopLevelObject(ctx context.Context, obj ru
 		attribute.Int64("generation", m.GetGeneration()),
 	}
 
-	spanData := &tracesdk.SpanSnapshot{
+	spanData := &tracetest.SpanStub{
 		SpanContext: trace.NewSpanContext(trace.SpanContextConfig{
 			TraceID: objectToTraceID(m),
 			SpanID:  objectToSpanID(m),
