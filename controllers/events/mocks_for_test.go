@@ -20,8 +20,18 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 )
 
-// Initialize an EventWatcher, context and logger ready for testing
+// Initialize an EventWatcher, context and logger ready for testing, using a
+// fake span exporter that records spans in memory.
 func newTestEventWatcher(initObjs ...runtime.Object) (context.Context, *EventWatcher, *fakeExporter, logr.Logger) {
+	exporter := newFakeExporter()
+	ctx, r, log := newTestEventWatcherWithExporter(exporter, initObjs...)
+	return ctx, r, exporter, log
+}
+
+// newTestEventWatcherWithExporter builds the same test EventWatcher but sends
+// spans to the supplied exporter, so callers can wire in the real OTLP exporter
+// for wire-level e2e tests.
+func newTestEventWatcherWithExporter(exporter sdktrace.SpanExporter, initObjs ...runtime.Object) (context.Context, *EventWatcher, logr.Logger) {
 	ctx := context.Background()
 	scheme := runtime.NewScheme()
 	_ = clientgoscheme.AddToScheme(scheme)
@@ -41,7 +51,6 @@ func newTestEventWatcher(initObjs ...runtime.Object) (context.Context, *EventWat
 		WithReturnManagedFields().
 		WithRuntimeObjects(sanitizeForFakeClient(initObjs)...).
 		Build()
-	exporter := newFakeExporter()
 
 	r := &EventWatcher{
 		Client:   fakeClient,
@@ -51,7 +60,7 @@ func newTestEventWatcher(initObjs ...runtime.Object) (context.Context, *EventWat
 
 	r.initialize(scheme)
 
-	return ctx, r, exporter, log
+	return ctx, r, log
 }
 
 // sanitizeForFakeClient adapts initial objects to the stricter controller-runtime

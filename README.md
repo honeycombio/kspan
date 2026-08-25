@@ -33,3 +33,14 @@ Heuristics:
 For future consideration:
  - We can match up `resourceVersion` between event and object.
    - Do we need to?
+
+## Testing
+
+kspan is verified at two levels.
+
+**Unit + Tier-1 e2e (deterministic, no cluster).**
+`make test` runs the unit tests: a fake controller-runtime client plus a captured-span exporter, driven by a YAML "playback" harness that replays recorded Event sequences with the clock controlled via `pkg/mtime`.
+`make test-e2e` runs the Tier-1 e2e test, which points kspan's real OTLP/gRPC exporter at an in-process OTLP receiver and asserts on the spans it receives over the wire (span count, single trace root, full parent/child connectivity, and the `service.name = "kspan"` resource rewrite).
+This exercises the real export path deterministically and is the CI gate.
+
+A real-cluster smoke test (kind + Jaeger, generating live Kubernetes Events and viewing the traces in the Jaeger UI) is a possible future addition for human visual confirmation, but is not currently part of the repo.

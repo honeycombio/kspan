@@ -10,9 +10,15 @@ endif
 
 all: manager
 
-# Run tests
+# Run unit tests
 test: fmt vet
 	go test ./... -coverprofile cover.out
+
+# Run the Tier-1 e2e test: drives the controller and asserts on the spans it
+# emits over a real OTLP/gRPC round-trip into an in-process sink. Deterministic
+# (mtime-driven playback), no external cluster required. See KSPAN-E2E-RESEARCH.md.
+test-e2e: fmt
+	go test -tags e2e -run TestOTLPExportE2E ./controllers/events/
 
 # Build manager binary
 manager:
