@@ -1,10 +1,14 @@
 # kspan - Turning Kubernetes Events into spans
 
-[![OSS Lifecycle](https://img.shields.io/osslifecycle/honeycombio/kspan?color=success)](https://github.com/honeycombio/home/blob/main/honeycomb-oss-lifecycle-and-practices.md)
+[![OSS Lifecycle](https://img.shields.io/osslifecycle/honeycombio/kspan)](https://github.com/honeycombio/home/blob/main/honeycomb-oss-lifecycle-and-practices.md)
+
+> [!WARNING]
+> **This repository is archived.** It is no longer maintained, and no issues or pull requests will be accepted.
+> Do not use the code or any artifacts built from it (including container images) in new deployments.
+> See the [Honeycomb OSS Lifecycle and Practices](https://github.com/honeycombio/home/blob/main/honeycomb-oss-lifecycle-and-practices.md) for what archived means.
+> To collect Kubernetes Events, use the [OpenTelemetry Collector for Kubernetes](https://opentelemetry.io/docs/platforms/kubernetes/collector/components/).
 
 This kspan repo was originally forked from https://github.com/weaveworks-experiments/kspan and has gone through several iterations by Honeycomb before landing here.
-
-## This project is a Work In Progress, under active evolution.
 
 Most Kubernetes components produce Events when something interesting happens.
 This program turns those Events into OpenTelemetry Spans, joining them up by causality and grouping them together into Traces.
